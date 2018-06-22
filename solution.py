@@ -52,23 +52,35 @@ def naked_twins(values):
     # TODO: Implement this function!
     
     # Get all the boxes that have only 2 possible values left
-    pairs = [[box, values[box]] for box in values.keys() if len(values[box]) == 2]
-
-    # Go through each box that has only 2 possible values left to find naked twins
-    for box in pairs:      
-        # Go through each peer and see if the current box matches 
-        for peer in peers[box[0]]:
-            # Compare the current boxes possible values with the values of each peer
-            if box[1] == values[peer]:
-                # Go through the naked twins and remove those numbers from their peers
-                peersToEdit = peers[peer] & peers[box[0]]
-                for p in peersToEdit:
-                    if len(values[p]) > 2:
-                        for v in box[1]:
-                            if v in values[p]:
-                                values = assign_value(values, p, values[p].replace(v, ""))
+    # Pairs - A list of [Box, Values] of any boxes with exactly 2 values left
+    # Box - from values.key() - box_name
+    # Values - From Values[box_name] - '123456'
+ 
+    display(values)
     
-        
+    for unit in unitlist:
+        pairBoxes = [[box, values[box]] for box in unit if len(values[box]) == 2]
+    # Go through each box that has only 2 possible values left to find naked twins
+    # Pair - A [Box, Values] of a box that has exactly 2 values left
+        if len(pairBoxes) == 2:
+            box1, box2 = pairBoxes[0], pairBoxes[1]
+            print(box1, box2)
+            if box1[1] == box2[1]:
+                # Check through each box with exactly 2 values left to see if it matches any 2 values of it's peers
+                print("Got ourselves a pair of naked twins!")
+                print(box1, box2)
+                # PeersToEdit - a set of peers of a set of naked twins
+                # p - a box_number of a peer of a naked twin
+                #removable_peers = [p for p in peersToEdit if len(values[p]) > 2]
+                editPeers = [p for p in unit if len(values[p]) > 2]
+                print("Peers to edit: ", editPeers)
+                for p in editPeers:
+                    for v in values[box1[0]]:
+                        if v in values[p]:
+                            print("Removed a value because of a naked pair!", p, v, values[p])
+                            values = assign_value(values, p, values[p].replace(v, ""))
+                            display(values)
+    
     return values
             
           
@@ -102,20 +114,21 @@ def eliminate(values):
         - keys: Box labels, e.g. 'A1'
         - values: Value in corresponding box, e.g. '8', or '123456789' if it is empty.
     """
+    # Look through every box and value on the board
     for key, value in values.items():
+        # Find all the values with only one value left
         if len(value) == 1:
-            peers = []
-            for unit in unitlist:
-               if key in unit:
-                   peers.append(unit)
-            for peer in peers:
-                for box in peer:
-                    if box != key:
-                        if len(values[box]) > 1:
+            # Create a list of peers of that box
+            neighbors = peers[key]
+            # Look through each neighbor, n
+            for n in neighbors:
+                # Make sure there is more than one value left in the neighbor
+                if len(values[n]) > 1:
                            # string = values[box]
                            # values[box] = string.replace(value, "")
-                            values = assign_value(values, box, values[box].replace(value, ""))
-            
+                            # replace the single value with nothing from the peer's box with the single value in it
+                            values = assign_value(values, n, values[n].replace(value, ""))
+                            #print(value, n)
     return values
 
 
@@ -153,16 +166,17 @@ def only_choice(values):
 
 
  """
+   # print("Only_Choice Removed: ")
     for unit in unitlist:
         for number in '123456789':
-            possible_options = []
-            for box in unit:
-                if number in values[box]:
-                     possible_options.append(box)
+            
+            possible_options = [box for box in unit if number in values[box]]
             if len(possible_options) == 1:
-               # values[possible_options[0]] = number
                 values = assign_value(values, possible_options[0], number)
+               # print(number, values[possible_options[0]], possible_options[0])
     return values
+
+    
 
 
 def reduce_puzzle(values):
@@ -191,9 +205,11 @@ def reduce_puzzle(values):
     stalled = False
     while not stalled:
         solved_values_before = len([box for box in values.keys() if len(values[box]) == 1])
-        values = eliminate(values)
-        values = only_choice(values)
         values = naked_twins(values)
+        values = only_choice(values)
+        values = eliminate(values)
+        print("After Full Round")
+        display(values)
         solved_values_after = len([box for box in values.keys() if len(values[box]) == 1])
         stalled = solved_values_before == solved_values_after
         if len([box for box in values.keys() if len(values[box]) == 0]):
