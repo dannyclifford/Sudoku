@@ -57,30 +57,36 @@ def naked_twins(values):
     # Values - From Values[box_name] - '123456'
  
     display(values)
-    
-    for unit in unitlist:
-        pairBoxes = [[box, values[box]] for box in unit if len(values[box]) == 2]
+    pairBoxes = [box for box in values.keys() if len(values[box]) == 2]
+    naked_twins = []
+    for box1 in pairBoxes:
     # Go through each box that has only 2 possible values left to find naked twins
     # Pair - A [Box, Values] of a box that has exactly 2 values left
-        if len(pairBoxes) == 2:
-            box1, box2 = pairBoxes[0], pairBoxes[1]
-            print(box1, box2)
-            if box1[1] == box2[1]:
+        print(box1)
+        for box2 in peers[box1]:
+            #box1, box2 = pairBoxes[0], pairBoxes[1]
+            #print(box1, box2)
+            if values[box1] == values[box2]:
                 # Check through each box with exactly 2 values left to see if it matches any 2 values of it's peers
                 print("Got ourselves a pair of naked twins!")
-                print(box1, box2)
+                print(box1, box2, values[box1], values[box2])
                 # PeersToEdit - a set of peers of a set of naked twins
                 # p - a box_number of a peer of a naked twin
                 #removable_peers = [p for p in peersToEdit if len(values[p]) > 2]
-                editPeers = [p for p in unit if len(values[p]) > 2]
-                print("Peers to edit: ", editPeers)
-                for p in editPeers:
-                    for v in values[box1[0]]:
-                        if v in values[p]:
-                            print("Removed a value because of a naked pair!", p, v, values[p])
-                            values = assign_value(values, p, values[p].replace(v, ""))
-                            display(values)
-    
+                naked_twins.append([box1, box2])
+                print("Peers to edit: ", naked_twins)
+    for p in naked_twins:
+        box1, box2 = p[0], p[1]
+        p1, p2 = peers[box1], peers[box2]
+        twinPeers = p1.intersection(p2)
+        for box in twinPeers:
+            if len(values[box]) > 1:
+                for v in values[box1]:
+                    if v in values[box]:
+                        print("Removed a value because of a naked pair!", box, v, values[box])
+                        values = assign_value(values, box, values[box].replace(v, ""))
+                display(values)
+            
     return values
             
           
